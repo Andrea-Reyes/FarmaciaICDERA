@@ -10,7 +10,7 @@ const MQTT_USER = process.env.MQTT_USER || "";
 const MQTT_PASS = process.env.MQTT_PASS || "";
 
 const pesoPastilla = 10;
-const DEFAULT_COLLECTION = "medicinas";
+const DEFAULT_COLLECTION = "diclofenaco";
 const serviceAccount = require("./serviceAccountKey.json");
 
 admin.initializeApp({
@@ -64,7 +64,7 @@ client.on("message", async (topic, rawMessage) => {
     : DEFAULT_COLLECTION;
 
   const doc = {
-    nombre: nombre || "medicamento",
+    nombre: nombre || "diclofenaco",
     peso,
     stock,
     timestamp: timestamp

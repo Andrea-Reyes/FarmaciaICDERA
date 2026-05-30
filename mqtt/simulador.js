@@ -21,7 +21,7 @@ client.on("connect", () => {
     pesoActual = Math.max(0, pesoActual - pesoMenos);
 
     const payload = JSON.stringify({
-      nombre: "ibuprofeno15",
+      nombre: "diclofenaco",
       peso: pesoActual,
       timestamp: Math.floor(Date.now() / 1000),
     });

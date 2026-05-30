@@ -50,7 +50,7 @@ export default function App() {
 
   useEffect(() => {
     const q = query(
-      collection(db, "ibuprofeno154"),
+      collection(db, "diclofenaco"),
       orderBy("timestamp", "desc"),
       limit(5)
     );
