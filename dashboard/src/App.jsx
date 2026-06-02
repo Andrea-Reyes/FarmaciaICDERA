@@ -4,8 +4,8 @@ import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestor
 import { db } from "./firebase";
 import "./App.css";
 
-const pesoPastilla = 278;
-const pesoTotal = 834;
+const pesoPastilla = 260;
+const pesoTotal = 1000;
 const cantidadPastillas = pesoTotal / pesoPastilla;
 const precioPastilla = 2.5;
 
@@ -50,7 +50,7 @@ export default function App() {
 
   useEffect(() => {
     const q = query(
-      collection(db, "jugosPulp"),
+      collection(db, "jugos"),
       orderBy("timestamp", "desc"),
       limit(5)
     );
