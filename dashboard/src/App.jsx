@@ -25,8 +25,8 @@ function formatoHora(timestamp) {
 function estadoStock({ stock }) {
   const porcentaje = (stock / cantidadInicial) * 100;
   if (porcentaje == 0) return <span className="badge badge-danger">Agotado</span>;
-  if (porcentaje <= 20) return <span className="badge badge-danger">Crítico</span>;
-  if (porcentaje <= 60) return <span className="badge badge-warn">Bajo</span>;
+  if (porcentaje <= 29) return <span className="badge badge-danger">Crítico</span>;
+  if (porcentaje <= 58) return <span className="badge badge-warn">Bajo</span>;
   return <span className="badge badge-ok">Normal</span>;
 }
 
@@ -85,6 +85,14 @@ export default function App() {
     { name: "En stock", value: stockActual },
     { name: "Vendidos", value: vendidos },
   ];
+
+  function EstadoStock({ stock }) {
+    console.log("stock:", stock);
+
+    return (
+      <span>TEST</span>
+    );
+  }
 
   return (
     <div className="app">
@@ -222,7 +230,7 @@ export default function App() {
                   <h3 className="chart-title">Ventas del dia</h3>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={200}>
+              <ResponsiveContainer width="100%" height={250}>
                 <AreaChart data={datosGrafica} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <defs>
                     <linearGradient id="gradPeso" x1="0" y1="0" x2="0" y2="1">
@@ -342,6 +350,7 @@ export default function App() {
                         )}
                       </td>
                       <td><estadoStock stock={stockAct} /></td>
+                      <td>{stockAct}</td>
                     </tr>
                   );
                 })}
