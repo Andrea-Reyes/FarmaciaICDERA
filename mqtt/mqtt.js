@@ -47,7 +47,7 @@ client.on("connect", () => {
 
 //Muestra logs cuando hay un registro nuevo
 client.on("message", async (topic, rawMessage) => {
-  console.log(rawMessage.toString());
+  //console.log(rawMessage.toString());
 
   //Validacion de json
   let payload;
@@ -86,7 +86,7 @@ client.on("message", async (topic, rawMessage) => {
   //Almacenamiento de datos en firebase
   try {
     const ref = await db.collection(collection).add(doc);
-    console.log(`Coleccion: ${collection} | ID: ${ref.id} | Peso: ${peso}g | Stock: ${stock}`);
+    console.log(`Coleccion: ${collection} | ID: ${ref.id} | Producto: ${producto} | Peso: ${peso}g | Stock: ${stock} | Timestamp: ${timestamp}`);
   } catch (err) {
     console.error("Error: ", err.message);
   }
