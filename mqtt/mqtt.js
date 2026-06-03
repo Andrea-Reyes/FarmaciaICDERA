@@ -1,88 +1,98 @@
-/* npm install mqtt firebase-admin dotenv */
-
+//Importacion de librerias
 require("dotenv").config();
 const mqtt = require("mqtt");
 const admin = require("firebase-admin");
 
-const MQTT_BROKER = process.env.MQTT_BROKER || "";
-const MQTT_TOPIC = process.env.MQTT_TOPIC || "";
-const MQTT_USER = process.env.MQTT_USER || "";
-const MQTT_PASS = process.env.MQTT_PASS || "";
+//Declaracion de variables de entorno (HiveMQ)
+const MQTT_BROKER = process.env.MQTT_BROKER;
+const MQTT_TOPIC = process.env.MQTT_TOPIC;
+const MQTT_USER = process.env.MQTT_USER;
+const MQTT_PASS = process.env.MQTT_PASS;
 
-const pesoPastilla = 10;
-const DEFAULT_COLLECTION = "diclofenaco";
+//Declaracion de peso y coleccion
+const pesoProducto = 260;
+const DEFAULT_COLLECTION = "jugosKerns";
+
+//Implementacion de credenciales de firebase
 const serviceAccount = require("./serviceAccountKey.json");
-
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 const db = admin.firestore();
 
-function calcularStock({ nombre, peso }) {
-  const stock = Math.round(peso / pesoPastilla);
+//Funcion para calcular cantidad de productos existentes
+function calcularStock({ peso }) {
+  const stock = Math.round(peso / pesoProducto);
   return { stock };
 }
 
+//Conexion usando mqtt
 const client = mqtt.connect(MQTT_BROKER, {
   username: MQTT_USER,
   password: MQTT_PASS,
   reconnectPeriod: 3000,
-  clientId: `farmiot-bridge-${Date.now()}`,
+  clientId: `proyecto-icdera-${Date.now()}`,
 });
 
+//Muestra logs cuando se logra una conexion
 client.on("connect", () => {
   client.subscribe(MQTT_TOPIC, (err) => {
     if (err) {
-      console.error("Error", err.message);
+      console.error("Error: ", err.message);
     } else {
       console.log(`Conexion con topic: ${MQTT_TOPIC}`);
     }
   });
 });
 
+//Muestra logs cuando hay un registro nuevo
 client.on("message", async (topic, rawMessage) => {
-  let payload;
+  console.log(rawMessage.toString());
 
+  //Validacion de json
+  let payload;
   try {
     payload = JSON.parse(rawMessage.toString());
   } catch (e) {
-    console.warn("Error:", rawMessage.toString());
+    console.warn("Error: ", rawMessage.toString());
     return;
   }
 
-  const { nombre, peso, timestamp } = payload;
-
+  //Validacion de peso
+  const { producto, peso, timestamp } = payload;
   if (typeof peso !== "number") {
-    console.warn("No hay peso: ", payload);
+    console.warn("Error: ", payload);
     return;
   }
 
-  const { stock } = calcularStock({ nombre, peso });
+  //Calculo de stock
+  const { stock } = calcularStock({ peso });
 
-  const collection = nombre
-    ? nombre.toLowerCase().replace(/\s/g, "")
-    : DEFAULT_COLLECTION;
+  //Creacion de coleccion
+  const collection = "jugosKerns";
+  //const collection = producto ? producto.toLowerCase().replace(/\s/g, "") : DEFAULT_COLLECTION;
 
+  //Envio de datos
   const doc = {
-    nombre: nombre || "diclofenaco",
+    producto: producto || "jugosKerns",
     peso,
     stock,
     timestamp: timestamp
-      ? admin.firestore.Timestamp.fromMillis(timestamp * 1000)
+      ? admin.firestore.Timestamp.fromDate(new Date(timestamp))
       : admin.firestore.FieldValue.serverTimestamp(),
-    recibidoEn: admin.firestore.FieldValue.serverTimestamp(),
+    //recibidoEn: admin.firestore.FieldValue.serverTimestamp(),
   };
 
+  //Almacenamiento de datos en firebase
   try {
     const ref = await db.collection(collection).add(doc);
-    console.log(
-      `${collection} | ID: ${ref.id} | peso: ${peso}g - stock estimado: ${stock} pastillas`
-    );
+    console.log(`Coleccion: ${collection} | ID: ${ref.id} | Peso: ${peso}g | Stock: ${stock}`);
   } catch (err) {
-    console.error("Error:", err.message);
+    console.error("Error: ", err.message);
   }
 });
 
+//Validacion de errores
 client.on("error", (err) => {
-  console.error("Error: ", err.message);
+  console.error("Error:b", err.message);
 });
