@@ -1,36 +1,36 @@
+//Importacion de librerias
 import { useState, useEffect } from "react";
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, } from "recharts";
 import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { db } from "./firebase";
 import "./App.css";
 
-const pesoPastilla = 260;
-const pesoTotal = 1000;
-const cantidadPastillas = pesoTotal / pesoPastilla;
-const precioPastilla = 2.5;
+//Declaracion de variables
+const cantidadInicial = 5;
+const precioProducto = 2.5;
 
-function calculoStock(peso) {
-  return Math.max(0, Math.round(peso / pesoPastilla));
+//Funcion para calcular el stock faltante
+function calculoVentas(stock) {
+  return Math.max(0, cantidadInicial - stock);
 }
 
-function calculoVentas(peso) {
-  return Math.max(0, cantidadPastillas - calculoStock(peso));
-}
-
+//Funcion para formatear la hora
 function formatoHora(timestamp) {
   if (!timestamp) return "--:--";
   const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-  return date.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+  return date.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
 }
 
+//Funcion para mostar el nivel de productos
 function estadoStock({ stock }) {
-  const porcentaje = (stock / cantidadPastillas) * 100;
+  const porcentaje = (stock / cantidadInicial) * 100;
   if (porcentaje == 0) return <span className="badge badge-danger">Agotado</span>;
-  if (porcentaje <= 15) return <span className="badge badge-danger">Crítico</span>;
-  if (porcentaje <= 35) return <span className="badge badge-warn">Bajo</span>;
+  if (porcentaje <= 20) return <span className="badge badge-danger">Crítico</span>;
+  if (porcentaje <= 60) return <span className="badge badge-warn">Bajo</span>;
   return <span className="badge badge-ok">Normal</span>;
 }
 
+//Funcion para mostar cuadro de detalles en la grafica
 function tooltipGrafica({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
@@ -48,9 +48,10 @@ function tooltipGrafica({ active, payload, label }) {
 export default function App() {
   const [lecturas, setLecturas] = useState([]);
 
+  //Mostrar ultimos 5 registros
   useEffect(() => {
     const q = query(
-      collection(db, "acetaminofen"),
+      collection(db, "jugosKerns"),
       orderBy("timestamp", "desc"),
       limit(5)
     );
@@ -67,17 +68,17 @@ export default function App() {
   }, []);
 
   const ultimaLectura = lecturas[lecturas.length - 1];
-  const stockActual = ultimaLectura ? calculoStock(ultimaLectura.peso) : 0;
-  const vendidos = ultimaLectura ? calculoVentas(ultimaLectura.peso) : 0;
+  const stockActual = ultimaLectura ? ultimaLectura.stock : 0;
+  const vendidos = ultimaLectura ? calculoVentas(ultimaLectura.stock) : 0;
   const pesoActual = ultimaLectura ? ultimaLectura.peso.toFixed(1) : "0";
-  const porcentaje = Math.round((stockActual / cantidadPastillas) * 100);
-  const dineroGanado = vendidos * precioPastilla;
+  const porcentaje = Math.round((stockActual / cantidadInicial) * 100);
+  const dineroGanado = vendidos * precioProducto;
 
   const datosGrafica = lecturas.map((lectura) => ({
     hora: formatoHora(lectura.timestamp),
     peso: parseFloat(lectura.peso.toFixed(1)),
-    stock: calculoStock(lectura.peso),
-    vendidos: calculoVentas(lectura.peso),
+    stock: lectura.stock,
+    vendidos: calculoVentas(lectura.stock),
   }));
 
   const graficaCircular = [
@@ -87,8 +88,8 @@ export default function App() {
 
   return (
     <div className="app">
-
       <aside className="sidebar">
+        {/* Barra horizontal izquierda */}
         <div className="sidebar-logo">
           <div className="logo-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -97,9 +98,10 @@ export default function App() {
               <path d="M2 12l10 5 10-5" />
             </svg>
           </div>
-          <span>Farmacia ICDERA</span>
+          <span>Tienda ICDERA</span>
         </div>
 
+        {/* Opciones de la barra horizontal */}
         <nav className="sidebar-nav">
           <button className="nav-item active">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="18" height="18">
@@ -122,10 +124,11 @@ export default function App() {
               <path d="M13.73 21a2 2 0 0 1-3.46 0" />
             </svg>
             Alertas
-            {stockActual <= 18 && <span className="nav-badge" />}
+            {stockActual <= 3 && <span className="nav-badge" />}
           </button>
         </nav>
 
+        {/* Texto inferior barra horizontal */}
         <div className="sidebar-footer">
           <div className="mqtt-status">
             <span className="mqtt-dot" />
@@ -137,17 +140,17 @@ export default function App() {
         </div>
       </aside>
 
+      {/* Contenido dashboard */}
       <main className="main">
         <header className="topbar">
           <div>
             <h1 className="page-title">Inventario</h1>
           </div>
-          <div className="live-chip">
-            ICEDERA
-          </div>
         </header>
 
+        {/* Cuadros KPIs */}
         <div className="kpi-row">
+          {/* Cuadro Stock actual */}
           <div className="kpi-card" style={{ "--accent": "#3B9EFF" }}>
             <div className="kpi-icon blue">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
@@ -158,10 +161,11 @@ export default function App() {
             <div>
               <p className="kpi-label">Stock actual</p>
               <p className="kpi-value">{stockActual} <span className="kpi-unit"></span></p>
-              <p className="kpi-sub">de {cantidadPastillas} pastillas</p>
+              <p className="kpi-sub">de 5 jugos</p>
             </div>
           </div>
 
+          {/* Cuadro Vendidos */}
           <div className="kpi-card" style={{ "--accent": "#10C98F" }}>
             <div className="kpi-icon green">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
@@ -172,10 +176,11 @@ export default function App() {
             <div>
               <p className="kpi-label">Vendidos</p>
               <p className="kpi-value">{vendidos} <span className="kpi-unit"></span></p>
-              <p className="kpi-sub">pastillas</p>
+              <p className="kpi-sub">jugos Kerns</p>
             </div>
           </div>
 
+          {/* Cuadro Peso detectado */}
           <div className="kpi-card" style={{ "--accent": "#A78BFA" }}>
             <div className="kpi-icon purple">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
@@ -185,12 +190,13 @@ export default function App() {
               </svg>
             </div>
             <div>
-              <p className="kpi-label">Peso detectado</p>
-              <p className="kpi-value">{pesoActual} <span className="kpi-unit">g</span></p>
-              <p className="kpi-sub">valor actual</p>
+              <p className="kpi-label">Peso actual</p>
+              <p className="kpi-value">{pesoActual} g<span className="kpi-unit"></span></p>
+              <p className="kpi-sub">ultimo valor detectado</p>
             </div>
           </div>
 
+          {/* Cuadro Ganado */}
           <div className="kpi-card" style={{ "--accent": "#F59E0B" }}>
             <div className="kpi-icon amber">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" width="20" height="20">
@@ -200,18 +206,20 @@ export default function App() {
             </div>
             <div>
               <p className="kpi-label">Ganado</p>
-              <p className="kpi-value">Q{dineroGanado} <span className="kpi-unit"></span></p>
-              <p className="kpi-sub">ventas totales</p>
+              <p className="kpi-value">Q {dineroGanado} <span className="kpi-unit"></span></p>
+              <p className="kpi-sub">en ventas totales</p>
             </div>
           </div>
         </div>
 
+        {/* Graficas */}
         <div className="content-grid">
+          {/* Grafica de lineas */}
           <div className="charts-col">
             <div className="chart-card">
               <div className="chart-header">
                 <div>
-                  <h3 className="chart-title">Peso detectado por el sensor</h3>
+                  <h3 className="chart-title">Ventas del dia</h3>
                 </div>
               </div>
               <ResponsiveContainer width="100%" height={200}>
@@ -232,11 +240,12 @@ export default function App() {
             </div>
           </div>
 
+          {/* Grafica de barras */}
           <div className="product-panel">
             <div className="product-header">
-              <div className="product-icon">💊</div>
+              <div className="product-icon">🧃</div>
               <div>
-                <h2 className="product-name">Ibuprofeno</h2>
+                <h2 className="product-name">Jugos Kerns</h2>
               </div>
               <estadoStock stock={stockActual} />
             </div>
@@ -256,11 +265,12 @@ export default function App() {
                 />
               </div>
               <div className="progress-labels" style={{ marginTop: 6 }}>
-                <span className="muted">{stockActual} pastillas restantes</span>
-                <span className="muted">{cantidadPastillas} en total</span>
+                <span className="muted">{stockActual} jugos restantes</span>
+                <span className="muted">5 en total</span>
               </div>
             </div>
 
+            {/* Grafica de anillo */}
             <div className="donut-section">
               <p className="chart-sub-title">Distribución</p>
               <div className="donut-wrap">
@@ -285,6 +295,7 @@ export default function App() {
               </div>
             </div>
 
+            {/* Ultima lectura */}
             <div className="last-reading">
               <span className="lr-dot" />
               <span className="lr-text">
@@ -294,14 +305,15 @@ export default function App() {
           </div>
         </div>
 
+        {/* Tabla de datos */}
         <div className="table-card">
-          <h2 className="section-title">Historial de lecturas · Ibuprofeno</h2>
+          <h2 className="section-title">Historial de lecturas</h2>
           <div className="table-wrap">
             <table className="readings-table">
               <thead>
                 <tr>
                   <th>Hora</th>
-                  <th>Nombre</th>
+                  <th>Producto</th>
                   <th>Peso (g)</th>
                   <th>Stock</th>
                   <th>Vendidos</th>
@@ -312,16 +324,16 @@ export default function App() {
               <tbody>
                 {[...lecturas].reverse().map((lectura, i, arr) => {
                   const prev = arr[i + 1];
-                  const stockAct = calculoStock(lectura.peso);
-                  const stockPrev = prev ? calculoStock(prev.peso) : stockAct;
+                  const stockAct = lectura.stock;
+                  const stockPrev = prev ? prev.stock : stockAct;
                   const delta = stockAct - stockPrev;
                   return (
                     <tr key={lectura.id}>
                       <td className="td-mono">{formatoHora(lectura.timestamp)}</td>
-                      <td>{lectura.nombre}</td>
+                      <td>{lectura.producto}</td>
                       <td>{lectura.peso?.toFixed(1)}g</td>
                       <td><strong>{stockAct}</strong></td>
-                      <td>{calculoVentas(lectura.peso)}</td>
+                      <td>{calculoVentas(lectura.stock)}</td>
                       <td>
                         {delta !== 0 && (
                           <span className={`delta ${delta < 0 ? "delta-neg" : "delta-pos"}`}>
