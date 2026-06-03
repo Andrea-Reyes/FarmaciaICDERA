@@ -6,7 +6,7 @@ import { db } from "./firebase";
 import "./App.css";
 
 //Declaracion de variables
-const cantidadInicial = 5;
+const cantidadInicial = 7;
 const precioProducto = 2.5;
 
 //Funcion para calcular el stock faltante
@@ -161,7 +161,7 @@ export default function App() {
             <div>
               <p className="kpi-label">Stock actual</p>
               <p className="kpi-value">{stockActual} <span className="kpi-unit"></span></p>
-              <p className="kpi-sub">de 5 jugos</p>
+              <p className="kpi-sub">de {cantidadInicial} jugos</p>
             </div>
           </div>
 
@@ -260,13 +260,13 @@ export default function App() {
                   className="progress-fill"
                   style={{
                     width: `${porcentaje}%`,
-                    background: porcentaje <= 15 ? "#EF4444" : porcentaje <= 35 ? "#F97316" : "#3B9EFF",
+                    background: porcentaje <= 30 ? "#EF4444" : porcentaje <= 50 ? "#F97316" : "#3B9EFF",
                   }}
                 />
               </div>
               <div className="progress-labels" style={{ marginTop: 6 }}>
                 <span className="muted">{stockActual} jugos restantes</span>
-                <span className="muted">5 en total</span>
+                <span className="muted">{cantidadInicial} en total</span>
               </div>
             </div>
 
