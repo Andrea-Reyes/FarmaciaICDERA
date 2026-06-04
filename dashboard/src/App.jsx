@@ -67,6 +67,7 @@ export default function App() {
     return () => cancelarEscuchar();
   }, []);
 
+  //Declaracion de variables para el dashboard
   const ultimaLectura = lecturas[lecturas.length - 1];
   const stockActual = ultimaLectura ? ultimaLectura.stock : 0;
   const vendidos = ultimaLectura ? calculoVentas(ultimaLectura.stock) : 0;
@@ -74,6 +75,7 @@ export default function App() {
   const porcentaje = Math.round((stockActual / cantidadInicial) * 100);
   const dineroGanado = vendidos * precioProducto;
 
+  //Creacion de grafica de lineas
   const datosGrafica = lecturas.map((lectura) => ({
     hora: formatoHora(lectura.timestamp),
     peso: parseFloat(lectura.peso.toFixed(1)),
@@ -81,11 +83,13 @@ export default function App() {
     vendidos: calculoVentas(lectura.stock),
   }));
 
+  //Creacion de grafica de anillo
   const graficaCircular = [
     { name: "En stock", value: stockActual },
     { name: "Vendidos", value: vendidos },
   ];
 
+  //Contenido del dashboard
   return (
     <div className="app">
       <aside className="sidebar">
